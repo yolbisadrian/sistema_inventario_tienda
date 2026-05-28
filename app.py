@@ -5,40 +5,60 @@ import pandas as pd
 from datetime import datetime
 import json
 
-# Connection setup
-scope = ["https://spreadsheets.google.com/feeds", 'https://www.googleapis.com/auth/spreadsheets',
-         "https://www.googleapis.com/auth/drive.file", "https://www.googleapis.com/auth/drive"]
+# 1. Configuración de los permisos de Google
+scope = [
+    "https://spreadsheets.google.com/feeds",
+    "https://www.googleapis.com/auth/spreadsheets",
+    "https://www.googleapis.com/auth/drive.file",
+    "https://www.googleapis.com/auth/drive"
+]
 
+# 2. Función para conectarse a Google Sheets
 def connect_gsheet():
+    # Carga las credenciales desde los secretos de Streamlit
     creds_dict = json.loads(st.secrets["gcp_service_account"])
     creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
     client = gspread.authorize(creds)
-    return client.open_by_key("1kXr2RMPumkkHhhxrv0jTSPSDSp7C4t1ctV7M_WIU2jg").sheet1
+    
+    # ID de tu hoja "Base de Datos Incidencias"
+    sheet_id = "1kXr2RMPumkkHhhxrv0jTSPSDSp7C4t1ctV7M_WIU2jg"
+    
+    # Abre la hoja y selecciona la primera pestaña
+    sheet = client.open_by_key(sheet_id).sheet1
+    return sheet
 
+# 3. Título de la aplicación
 st.title("Sistema de Incidencias de Inventario")
 
-with st.form("registro"):
+# 4. Formulario de captura
+with st.form("registro_incidencia"):
     producto = st.text_input("Producto y Peso")
     problema = st.text_area("Descripción del Problema")
     responsable = st.selectbox("Responsable", ["Tienda", "Deposito (Laura)"])
     enviar = st.form_submit_button("Registrar Incidencia")
 
+# 5. Lógica para guardar datos
 if enviar:
     if producto and problema:
-        sheet = connect_gsheet()
-        fecha = datetime.now().strftime("%d/%m/%Y %H:%M")
-        sheet.append_row([fecha, producto, problema, responsable])
-        st.success("¡Incidencia registrada!")
+        try:
+            sheet = connect_gsheet()
+            fecha = datetime.now().strftime("%d/%m/%Y %H:%M")
+            sheet.append_row([fecha, producto, problema, responsable])
+            st.success("¡Incidencia registrada con éxito!")
+        except Exception as e:
+            st.error(f"Error al guardar: {e}")
     else:
         st.error("Por favor, llena todos los campos.")
 
+# 6. Mostrar el historial
 st.subheader("Historial de incidencias")
 try:
     sheet = connect_gsheet()
     data = sheet.get_all_records()
     if data:
-        st.table(pd.DataFrame(data))
+        df = pd.DataFrame(data)
+        st.table(df)
     else:
-        st.write("No hay incidencias registradas aún.")
+        st.write("No hay datos aún.")
 except Exception as e:
-    st.write(f"Error al conectar: {e}")
+    st.error(f"No se pudo cargar el historial: {e}")
