@@ -13,8 +13,8 @@ def connect_gsheet():
     creds_dict = json.loads(st.secrets["gcp_service_account"])
     creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
     client = gspread.authorize(creds)
-    # PEGA AQUÍ EL ID DE TU NUEVA HOJA ENTRE LAS COMILLAS
-    return client.open_by_key("1lnrcy5-dyr-zZB4RFeQ3GhsZ03xdwVgtVGhmsEXWAfA").sheet1
+    https://docs.google.com/spreadsheets/d/1kXr2RMPumkkKhhxrv0jTSPSDSp7C4t1ctV7M_WIU2Jg/edit?usp=sharing
+    return client.open_by_key("1kXr2RMPumkkHhhxrv0jTSPSDSp7C4t1ctV7M_WIU2jg").sheet1
 
 st.title("Sistema de Incidencias de Inventario")
 
