@@ -5,20 +5,19 @@ import pandas as pd
 from datetime import datetime
 import json
 
-# 1. Configuración de la conexión con Google Sheets
+# Config
 scope = ["https://spreadsheets.google.com/feeds", 'https://www.googleapis.com/auth/spreadsheets',
          "https://www.googleapis.com/auth/drive.file", "https://www.googleapis.com/auth/drive"]
 
-# Esta parte leerá tus credenciales desde los "Secrets" de Streamlit (te explicaré cómo hacerlo)
 def connect_gsheet():
     creds_dict = json.loads(st.secrets["gcp_service_account"])
     creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
     client = gspread.authorize(creds)
-    return client.open("Base de Datos Incidencias").sheet1
+    # Reemplaza con el ID de tu hoja: 1lnrcy5-dyr-zZB4RFeQ3GhsZ03xdwVgtVGhmsEXWAfA
+    return client.open_by_key("1lnrcy5-dyr-zZB4RFeQ3GhsZ03xdwVgtVGhmsEXWAfA").sheet1
 
 st.title("Sistema de Incidencias de Inventario")
 
-# 2. Formulario de registro
 with st.form("registro"):
     producto = st.text_input("Producto y Peso")
     problema = st.text_area("Descripción del Problema")
@@ -27,7 +26,6 @@ with st.form("registro"):
 
 if enviar:
     if producto and problema:
-        # Conectar y guardar
         sheet = connect_gsheet()
         fecha = datetime.now().strftime("%d/%m/%Y %H:%M")
         sheet.append_row([fecha, producto, problema, responsable])
@@ -35,12 +33,15 @@ if enviar:
     else:
         st.error("Por favor, llena todos los campos.")
 
-# 3. Mostrar historial
 st.subheader("Historial de incidencias")
 try:
     sheet = connect_gsheet()
     data = sheet.get_all_records()
-    df = pd.DataFrame(data)
-    st.table(df)
-except:
+    if data:
+        df = pd.DataFrame(data)
+        st.table(df)
+    else:
+        st.write("No hay datos aún.")
+except Exception as e:
+    st.write(f"Error: {e}")
     st.write("No hay datos aún o la conexión falló.")
